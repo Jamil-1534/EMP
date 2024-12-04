@@ -3,6 +3,41 @@ from PIL import Image
 from tkinter import ttk,messagebox
 import database
 
+def delete_all():
+    result=messagebox.askyesno('Confirm', 'Do you really want to delete all the records?')
+    if result:
+        database.deleteall_records()
+    else:
+        pass
+
+
+def show_all():
+    treeview_data()
+    searchEntry.delete(0,END)
+    searchBox.set('Search By')
+
+
+def search_employee():
+    if searchEntry.get()=='':
+        messagebox.showerror('Error', 'Enter value to search')
+    elif searchBox.get()=='Search By':
+        messagebox.showerror('Error', 'Please select an option')
+    else:
+        searched_data=database.search(searchBox.get(), searchEntry.get())
+        tree.delete(*tree.get_children())
+        for employee in searched_data:
+            tree.insert('', END, values=employee)
+
+def delete_employee():
+    selected_item=tree.selection()
+    if not selected_item:
+        messagebox.showerror('Error', 'Select data to delete')
+    else:
+        database.delete(idEntry.get())
+        treeview_data()
+        clear()
+        messagebox.showerror('Error','Data is deleted')
+
 def update_employee():
     selected_item=tree.selection()
     if not selected_item:
@@ -52,6 +87,9 @@ def add_employee():
     
     elif database.id_exists(idEntry.get()):
         messagebox.showerror('Error','Id already exists')
+
+    elif not idEntry.get().startswith('EMP'):
+        messagebox.showerror('Error', "Invalid ID format. Use 'EMP' followed by a number (e.g., 'EMP1').")#not nesecary
     
     else:
         database.insert(idEntry.get(),nameEntry.get(),phoneEntry.get(),roleBox.get(),genderBox.get(),salaryEntry.get())
@@ -125,10 +163,10 @@ searchBox.set('Search By')
 searchEntry=CTkEntry(rightFrame) 
 searchEntry.grid(row=0,column=1)
 
-searchButton=CTkButton(rightFrame, text='Search', width=100) 
+searchButton=CTkButton(rightFrame, text='Search', width=100,command=search_employee) 
 searchButton.grid(row=0,column=2)
 
-showallButton=CTkButton(rightFrame, text='Show All', width=100) 
+showallButton=CTkButton(rightFrame, text='Show All', width=100,command=show_all) 
 showallButton.grid(row=0,column=3,pady=5)
 
 tree=ttk.Treeview(rightFrame,height=13)
@@ -158,11 +196,13 @@ style=ttk.Style()
 style.configure('Treeview.Heading',font=('arial',18,'bold'))
 style.configure('Treeview', font=('arial', 12, 'bold'),rowheight=25, background='#000000', foreground='white')
 
-scrollbar=ttk.Scrollbar (rightFrame, orient=VERTICAL,) 
+scrollbar=ttk.Scrollbar (rightFrame, orient=VERTICAL,command=tree.yview) 
 scrollbar.grid(row=1,column=4,sticky='ns')
 
+tree.config(yscrollcommand=scrollbar.set)
+
 buttonFrame=CTkFrame(window,fg_color='#161030')
-buttonFrame.grid(row=2,column=0,columnspan=2)
+buttonFrame.grid(row=2,column=0,columnspan=2,pady=10)
 
 newButton=CTkButton(buttonFrame, text='New Employee', font=('arial', 15, 'bold'), width=160,corner_radius=15,command=lambda:clear(True))
 newButton.grid(row=0,column=0,pady=5)
@@ -173,15 +213,11 @@ addButton.grid(row=0,column=1,pady=5,padx=5)
 updateButton=CTkButton(buttonFrame, text='Update Employee', font=('arial', 15, 'bold'), width=160,corner_radius=15,command=update_employee)
 updateButton.grid(row=0,column=2,pady=5,padx=5)
 
-deleteButton=CTkButton(buttonFrame, text='Delete Employee', font=('arial', 15, 'bold'), width=160,corner_radius=15)
+deleteButton=CTkButton(buttonFrame, text='Delete Employee', font=('arial', 15, 'bold'), width=160,corner_radius=15,command=delete_employee)
 deleteButton.grid(row=0,column=3,pady=5,padx=5)
 
-deleteallButton=CTkButton(buttonFrame, text='Delete All',font=('arial', 15, 'bold'), width=160,corner_radius=15)
+deleteallButton=CTkButton(buttonFrame, text='Delete All',font=('arial', 15, 'bold'), width=160,corner_radius=15,command=delete_all)
 deleteallButton.grid(row=0,column=4,pady=5,padx=5)
-
-sectionButton=CTkButton(buttonFrame, text='Section',font=('arial', 15, 'bold'), width=160,corner_radius=15)
-sectionButton.grid(row=0,column=4,pady=5,padx=5)
-
 treeview_data()
 
 window.bind('<ButtonRelease>', selection)
